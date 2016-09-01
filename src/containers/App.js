@@ -58,7 +58,6 @@ class App extends React.Component{
     // check whether this cookie is valid or not
     */
 
-
    // get using from jwtToken
    let token = sessionStorage.getItem('jwtToken');
    if(!token || token === '') {//if there is no token, dont bother
@@ -88,10 +87,6 @@ class App extends React.Component{
     /* Check whether current route is login or register using regex for remove Header when login or register */
     let re = /(login|register)/;
     let isAuth = re.test(this.props.location.pathname);
-
-    //console.log(this.props.location);
-    //console.log(this.props.location.pathname);
-    //console.log(this.props.status);
 
     return (
       <div>

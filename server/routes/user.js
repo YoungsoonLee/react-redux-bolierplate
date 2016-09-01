@@ -2,6 +2,7 @@ import express from 'express';
 import expressJwt from 'express-jwt';
 import User from '../models/user';
 import utils from '../utils/index';
+import errorCode from '../utils/errorCode';
 import jwt from 'jsonwebtoken';
 
 const router = express.Router();
@@ -9,11 +10,12 @@ const router = express.Router();
 /*
     ACCOUNT SIGNUP: POST /api/user/signup
     BODY SAMPLE: { "username": "test", "password": "test" }
+      * todo: add email
     ERROR CODES:
         1: BAD USERNAME
         2: BAD PASSWORD
         3: BAD EMAIL
-        4: USERNAM EXISTS
+        4: USERNAME EXISTS
         5: EMAIL EXISTS
 */
 router.post('/signup',(req,res)=>{
@@ -21,30 +23,21 @@ router.post('/signup',(req,res)=>{
   let usernameRegex = /^[a-z0-9]+$/;
 
   if(!usernameRegex.test(req.body.username)){
-    return res.status(400).json({
-      error: 'BAD USERNAME',
-      code: 1
-    });
+    return res.status(400).json( errorCode.BAD_USERNAME );
   }
 
   /* to be implemet valid email */
 
   // CHECK PASS LENGTH
   if(req.body.password.length < 4 || typeof req.body.password !== 'string'){
-    return res.status(400).json({
-      error: 'BAD PASSWORD',
-      code: 2
-    });
+    return res.status(400).json( errorCode.BAD_USERNAME );
   }
 
   // CHECK USER EXISTANCE
   User.findOne({ username: req.body.username }, (err,exists)=>{
     if(err) throw err;
     if(exists){
-      return res.status(409).json({
-        error: 'USERNAME EXISTS',
-        code: 3
-      });
+      return res.status(409).json( errorCode.USERNAME_EXISTS );
     }else{
       //bug fix
       // CREATE ACCOUNT
@@ -59,9 +52,7 @@ router.post('/signup',(req,res)=>{
       user.save( (err,user) => {
         if(err) throw err;
 
-
         let token = utils.generateToken(user); //only use user.username and user._id
-        //console.log(user.username);
 
         return res.json({
           success: true,
@@ -83,11 +74,9 @@ router.post('/signup',(req,res)=>{
         3: PASSWORD WRONG
 */
 router.post('/signin',(req,res)=>{
+
   if(typeof req.body.password !== 'string'){
-    return res.status(401).json({
-      error: 'LOGIN FAILED',
-      code: 1
-    });
+    return res.status(401).json( errorCode.LOGIN_FAILED );
   }
 
   // FIND THE USER BY USERNAME
@@ -96,21 +85,15 @@ router.post('/signin',(req,res)=>{
 
     // CHECK ACCOUNT EXISTANCY
     if(!user){
-      return res.status(402).json({
-        error: 'NOT EXISTS USERNAME',
-        code: 2
-      });
+      return res.status(402).json( errorCode.LOGIN_FAILED );
     }
 
     // CHECK WHETHER THE PASSWORD IS VALID
     if(!user.validateHash(req.body.password)){
-      return res.status(403).json({
-        error: 'PASSWORD WRONG',
-        code: 3
-      });
+      return res.status(403).json( errorCode.WORNG_PASSWORD );
     }
 
-    // ALTER session using cookie
+    //session using cookie
     /*
     let session = req.session;
     session.loginInfo = {
@@ -119,7 +102,9 @@ router.post('/signin',(req,res)=>{
     };
     */
 
+
     let token = utils.generateToken(user);
+
     // RETURN SUCCESS
     return res.json({
       success: true,
@@ -131,55 +116,12 @@ router.post('/signin',(req,res)=>{
 
 });
 
-//get current user from token
-///api/account/validToken
-router.post('/validToken', function(req, res, next) {
-  // check header or url parameters or post parameters for token
-  var token = req.body.token || req.query.token;
-  if (!token) {
-   return res.status(401).json({message: 'Must pass token'});
-  }
-// Check token that was passed by decoding token using secret
- jwt.verify(token, process.env.JWT_SECRET, function(err, user) {
-    if (err) throw err;
-   //return user using the id from w/in JWTToken
-    User.findById({
-    '_id': user._id
-    }, function(err, user) {
-       if (err) throw err;
-          user = utils.getCleanUser(user);
-         //Note: you can renew token by creating new token(i.e.
-         //refresh it)w/ new expiration time at this point, but I’m
-         //passing the old token back.
-         // var token = utils.generateToken(user);
-        res.json({
-          success: true,
-          token: token,
-          username: user.username
-        });
-     });
-  });
-});
-
-
-/*
-  get current user info GET /api/account/getinfo
- */
-/*
-router.get('/getinfo',expressJwt({secret: process.env.JWT_SECRET}),(req,res)=>{
-  if(typeof req.session.loginInfo === 'undefined'){
-    return res.status(401).json({
-      error: 1
-    });
-  }
-
-  return res.json({ info: req.session.loginInfo });
-})
-*/
-
+/* valid token and getUserInfo */
 router.get('/getinfo',(req,res)=>{
 
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  //var token = req.body.token || req.query.token || req.headers['x-access-token'] || req.headers.authorization;
+  var token = utils.getToken(req.headers.authorization);
+  //console.log(token);
 
   if (!token) {
    return res.status(401).json({message: 'Must pass token'});
@@ -189,9 +131,7 @@ router.get('/getinfo',(req,res)=>{
    jwt.verify(token, process.env.JWT_SECRET, function(err, user) {
 
       if (err) {
-        res.status(401).json({
-          error: 1
-        });
+        res.status(401).json({error: 1});
       }else{
         //return user using the id from w/in JWTToken
 
@@ -209,6 +149,7 @@ router.get('/getinfo',(req,res)=>{
               //refresh it)w/ new expiration time at this point, but I’m
               //passing the old token back.
               // var token = utils.generateToken(user);
+
                res.json({
                  success: true,
                  token: token,
@@ -226,9 +167,9 @@ router.get('/getinfo',(req,res)=>{
   logout : POST /api/account/logout
  */
 router.post('/logout',(req,res)=>{
-  //req.session.destory( err => { if(err) throw err; });
-  //req.session.destroy();
-  return res.json({ success: true });
+
+  //req.session.destroy(); //using cookie
+  return res.json({ success: true }); //using jwt
 })
 
 /*

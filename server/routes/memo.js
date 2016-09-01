@@ -1,6 +1,10 @@
 import express from 'express';
 import Memo from '../models/memo';
 import mongoose from 'mongoose';
+import errorCode from '../utils/errorCode';
+import expressJwt from 'express-jwt';
+import utils from '../utils/index';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
@@ -12,42 +16,43 @@ const router = express.Router();
         1: NOT LOGGED IN
         2: EMPTY CONTENTS
 */
-
-router.post('/',(req,res)=>{
-  // check login status
-  if(typeof req.session.loginInfo === 'undefined'){
-    return res.status(403).json({
-      error: 'NOT LOGGED IN',
-      code: 1
-    });
-  }
-
+router.post('/', (req,res)=>{
+//router.post('/', expressJwt({secret: process.env.JWT_SECRET}),(req,res)=>{
   // check contents valid
   if(typeof req.body.contents !== 'string') {
-    return res.status(400).json({
-      error: 'EMPTY CONTENTS',
-      code: 2
-    });
+    return res.status(400).json(errorCode.EMPTY_CONTENTS);
   }
 
   if(req.body.contents === ''){
-    return res.status(400).json({
-      error: 'EMPTY CONTENTS',
-      code: 2
-    });
+    return res.status(400).json(errorCode.EMPTY_CONTENTS);
   }
 
-  // create new memo
-  let memo = new Memo({
-    writer: req.session.loginInfo.username,
-    contents: req.body.contents
+  let token = utils.getToken(req.headers.authorization);
+  if (!token) {
+   return res.status(401).json( errorCode.EXPIRE_SESSION );
+  }
+
+  // check login status
+  // Check token that was passed by decoding token using secret
+  jwt.verify(token, process.env.JWT_SECRET, function(err, user) {
+    if (err) {
+      res.status(401).json( errorCode.EXPIRE_SESSION );
+    }else{
+      // create new memo
+      let memo = new Memo({
+        writer: user.username,
+        contents: req.body.contents
+      });
+
+      // save into db
+      memo.save(err => {
+        if(err) throw err;
+        return res.json({ success: true });
+      });
+    }
   });
 
-  // save into db
-  memo.save(err => {
-    if(err) throw err;
-    return res.json({ success: true });
-  });
+
 });
 
 /*
@@ -117,7 +122,7 @@ router.put('/:id',(req,res)=>{
     memo.date.edited = new Date();
     memo.is_edited = true;
 
-    console.log(memo.contents);
+    //console.log(memo.contents);
 
     memo.save((err,memo)=>{
       if(err) throw err;
@@ -138,21 +143,24 @@ router.put('/:id',(req,res)=>{
         3: NO RESOURCE
         4: PERMISSION FAILURE
 */
-router.delete('/:id',(req,res)=>{
+router.delete('/:id',expressJwt({secret: process.env.JWT_SECRET}),(req,res)=>{
   // check memo in validity
   if(!mongoose.Types.ObjectId.isValid(req.params.id)){
-    return res.status(400).json({
-      error: 'INVALID ID',
-      code: 1
-    });
+    return res.status(400).json(errorCode.INVALID_ID);
   }
 
   // check login status
+  /*
   if(typeof req.session.loginInfo === 'undefined'){
     return res.status(403).json({
       error: 'NOT LOGGED IN',
       code: 2
     });
+  }
+  */
+  let token = utils.getToken(req.headers.authorization);
+  if (!token) {
+   return res.status(401).json( errorCode.EXPIRE_SESSION );
   }
 
   // find memo and check for writer
@@ -160,18 +168,29 @@ router.delete('/:id',(req,res)=>{
     if(err) throw err;
 
     if(!memo){
-      return res.status(404).json({
-        error: 'NO RESOURCE',
-        code: 3
-      });
+      return res.status(404).json(errorCode.NO_RESOURCE);
     }
 
+    /*
     if(memo.writer != req.session.loginInfo.username ){
       return res.status(403).json({
         error: 'PERMISSION FAILURE',
         code: 4
       });
     }
+    */
+
+    // check login status
+    // Check token that was passed by decoding token using secret
+    jwt.verify(token, process.env.JWT_SECRET, function(err, user) {
+      if (err) {
+        res.status(401).json( errorCode.EXPIRE_SESSION );
+      }else{
+        if(memo.writer != user.username ){
+          return res.status(403).json(errorCode.PERMISSION_FAILURE);
+        }
+      }
+    });
 
     // remove the memo
     Memo.remove({_id:req.params.id } , err => {

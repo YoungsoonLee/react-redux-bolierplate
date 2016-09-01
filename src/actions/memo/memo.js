@@ -18,17 +18,35 @@ import {
 import axios from 'axios';
 
 /* post memo */
-export function memoPostRequest(contents) {
+export function memoPostRequest(contents,token) {
   return (dispatch) => {
     // inform MEMO POST API is starting
     dispatch(memoPost());
 
-    return axios.post('/api/memo', { contents })
+    //sample for jwt  , server route : expressJwt({secret: process.env.JWT_SECRET})
+    /*
+    const request = axios({
+      method: 'post',
+      data: contents,
+      url: '/api/memo',
+      headers: {'Authorization': `Bearer ${token}`}
+    });
+    */
+
+    //return axios.post('/api/memo', { contents })
+    return axios({
+      method: 'post',
+      data: {
+        contents: contents,
+      },
+      url: '/api/memo',
+      headers: {'Authorization': `Bearer ${token}`}
+    })
     .then((response) => {
       dispatch(memoPostSuccess());
     })
     .catch((error) => {
-      dispatch(memoPostFailure(error.response.data.code));
+      dispatch(memoPostFailure(error.response.data));
     });
   }
 }
@@ -45,9 +63,10 @@ export function memoPostSuccess(){
   };
 }
 
-export function memoPostFailure(){
+export function memoPostFailure(error){
   return {
-    type: MEMO_POST_FAILURE
+    type: MEMO_POST_FAILURE,
+    error
   };
 }
 
@@ -142,11 +161,16 @@ export function memoEditFailure(){
 }
 
 /* remove memo*/
-export function memoRemoveRequest(id,index){
+export function memoRemoveRequest(id,index,token){
   return (dispatch) => {
       dispatch(memoRemove());
 
-      return axios.delete('/api/memo/' + id)
+      //return axios.delete('/api/memo/' + id)
+      return axios({
+        method: 'delete',
+        url: '/api/memo/'+ id,
+        headers: {'Authorization': `Bearer ${token}`}
+      })
       .then((response) => {
           dispatch(memoRemoveSuccess(index));
       }).catch((error) => {

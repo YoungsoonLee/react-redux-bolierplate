@@ -1,19 +1,7 @@
 import React from 'react';
-import {
-  connect
-} from 'react-redux';
-import {
-  Writer,
-  MemoList
-} from 'components';
-import {
-  memoPostRequest,
-  memoListRequest,
-  memoEditRequest,
-  memoRemoveRequest,
-  memoRemoveFromData,
-  memoStarRequest
-} from 'actions/memo/memo';
+import { connect } from 'react-redux';
+import { Writer, MemoList} from 'components';
+import { memoPostRequest,memoListRequest,memoEditRequest,memoRemoveRequest,memoRemoveFromData,memoStarRequest} from 'actions/memo/memo';
 
 class Home extends React.Component {
   constructor(props) {
@@ -148,7 +136,9 @@ class Home extends React.Component {
   }
 
   handlePost(contents) {
-    return this.props.memoPostRequest(contents).then(
+    let token = sessionStorage.getItem('jwtToken');
+
+    return this.props.memoPostRequest(contents,token).then(
       () => {
 
         if (this.props.postStaus.status === 'SUCCESS') {
@@ -163,7 +153,19 @@ class Home extends React.Component {
                   1: NOT LOGGED IN
                   2: EMPTY CONTENTS
           */
+          //console.log(this.props.postStaus);
+
           let $toastContent;
+          $toastContent = $('<span style="color: #FFB4BA">'+this.props.postStaus.error.MESSAGE+'</span>');
+          Materialize.toast($toastContent, 2000);
+
+          if(this.props.postStaus.error.CODE === 1){ //not logged in
+            setTimeout(() => {
+              location.reload(false);
+            }, 2000);
+          }
+
+          /*
           switch (this.props.postStaus.error) {
             case 1:
               // IF NOT LOGGED IN, NOTIFY AND REFRESH AFTER
@@ -182,6 +184,7 @@ class Home extends React.Component {
               Materialize.toast($toastContent, 2000);
               break;
           }
+          */
         }
       }
     );
@@ -260,7 +263,8 @@ class Home extends React.Component {
   }
 
   handleRemove(id, index) {
-    this.props.memoRemoveRequest(id, index).then(() => {
+    let token = sessionStorage.getItem('jwtToken');
+    this.props.memoRemoveRequest(id, index,token).then(() => {
       if (this.props.removeStatus.status === "SUCCESS") {
         // LOAD MORE MEMO IF THERE IS NO SCROLLBAR
         // 1 SECOND LATER. (ANIMATION TAKES 1SEC)
@@ -357,8 +361,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    memoPostRequest: (contents) => {
-      return dispatch(memoPostRequest(contents));
+    memoPostRequest: (contents,token) => {
+      return dispatch(memoPostRequest(contents,token));
     },
     memoListRequest: (isInitial, listType, id, username) => {
       return dispatch(memoListRequest(isInitial, listType, id, username));
@@ -366,8 +370,8 @@ const mapDispatchToProps = (dispatch) => {
     memoEditRequest: (id, index, contents) => {
       return dispatch(memoEditRequest(id, index, contents));
     },
-    memoRemoveRequest: (id, index) => {
-      return dispatch(memoRemoveRequest(id, index));
+    memoRemoveRequest: (id, index,token) => {
+      return dispatch(memoRemoveRequest(id, index,token));
     },
     memoStarRequest: (id, index) => {
       return dispatch(memoStarRequest(id, index));

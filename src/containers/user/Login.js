@@ -33,7 +33,7 @@ class Login extends React.Component {
                     browserHistory.push('/');
                     return true;
                 } else {
-                    let $toastContent = $('<span style="color: #FFB4BA">Incorrect username or password</span>');
+                    let $toastContent = $('<span style="color: #FFB4BA">' +this.props.errorCode.MESSAGE + '</span>');
                     Materialize.toast($toastContent, 2000);
                     return false;
                 }
@@ -55,6 +55,7 @@ const mapStateToProps = (state) => {
     return {
         status: state.auth.login.status,
         token: state.auth.status.token,
+        errorCode: state.auth.login.error
     };
 };
 

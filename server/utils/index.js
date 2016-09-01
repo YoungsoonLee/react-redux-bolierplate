@@ -29,9 +29,21 @@ function generateToken(user) {
   });
 }
 
+function getToken(token){
+  if(typeof token === 'undefined' ){
+    return token;
+  }else if(token.length > 0){
+    return token.replace('Bearer ','');
+  }else{
+    return token;
+  }
+
+}
+
 
 module.exports = {
   //validateSignUpForm: validateSignUpForm,
   getCleanUser: getCleanUser,
-  generateToken: generateToken
+  generateToken: generateToken,
+  getToken: getToken
 }

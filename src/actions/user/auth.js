@@ -26,7 +26,7 @@ export function loginRequest(username,password){
       //console.log('action login:',response.data);
       dispatch(loginSuccess(response.data));
     }).catch((error)=>{
-      dispatch(loginFailure());
+      dispatch(loginFailure(error.response.data));
     });
   }
 }
@@ -45,9 +45,10 @@ export function loginSuccess(payload){
   };
 }
 
-export function loginFailure(){
+export function loginFailure(error){
   return {
-    type: AUTH_LOGIN_FAILURE
+    type: AUTH_LOGIN_FAILURE,
+    error
   };
 }
 
@@ -61,8 +62,8 @@ export function registerRequest(username,password){
         //console.log('action auth:',response);
         dispatch(registerSuccess(response.data));
     }).catch((error) => {
-        //console.log('action:',error.response.data.code);
-        dispatch(registerFailure(error.response.data.code));
+        //console.log('action:',error.response.data);
+        dispatch(registerFailure(error.response.data));
     });
   };
 }
@@ -94,8 +95,12 @@ export function getStatusRequest(token) {
       // inform Get Status API is starting
       dispatch(getStatus());
 
-      //return axios.get('/api/user/getinfo')
-      return axios.get('/api/user/getinfo?token='+token)
+      return axios({
+        method: 'get',
+        url: '/api/user/getinfo',
+        headers: {'Authorization': `Bearer ${token}`}
+      })
+      //return axios.get('/api/user/getinfo?token='+token)
       .then((response) => {
           dispatch(getStatusSuccess(response.data));
       }).catch((error) => {

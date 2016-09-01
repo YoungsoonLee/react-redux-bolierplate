@@ -19,6 +19,7 @@ class Writer extends React.Component {
 
   handlePost(){
     let contents = this.state.contents;
+    //console.log(contents);
     this.props.onPost(contents).then(
       ()=>{
         this.setState({

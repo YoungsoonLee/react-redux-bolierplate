@@ -12,6 +12,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import compression from 'compression';
 import dotenv from 'dotenv';
+import utils from './utils/index'
 // LOAD ENV CONFIG
 dotenv.config();
 
@@ -59,13 +60,15 @@ app.use(function(err,req,res,next){
 app.use(function(req, res, next) {
 
   // check header or url parameters or post parameters for token
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  //var token = req.body.token || req.query.token || req.headers['x-access-token'] || req.headers.authorization;
+  var token = utils.getToken(req.headers.authorization);
+  //console.log('app.use:',token);
 
   // decode token
   if (token) {
     jwt.verify(token, process.env.JWT_SECRET, function(err, user) {
       if (err) {
-        return res.status(401).json({ success: false, message: 'Failed to authenticate token.' });
+        return res.status(401).json({ success: false, MESSAGE: 'Failed to authenticate token.' ,CODE:-1});
       } else {
         req.user = user;
         next();
@@ -74,6 +77,7 @@ app.use(function(req, res, next) {
   } else {
     next();
   }
+
 });
 
 //routes

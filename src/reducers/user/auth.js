@@ -6,7 +6,8 @@ import update from 'react-addons-update';
 
 const initialState = {
   login:{
-    status:'INIT'
+    status:'INIT',
+    error: -1
   },
   status: {
     valid: false,
@@ -73,7 +74,8 @@ export default function auth(state,action){
     case types.AUTH_LOGIN_FAILURE:
       return update(state,{
         login:{
-          status: { $set: 'FAILURE' }
+          status: { $set: 'FAILURE' },
+          error: { $set: action.error }
         }
       });
     case types.AUTH_GET_STATUS:

@@ -13,37 +13,14 @@ class Register extends React.Component {
   handleRegister(username,password){
     return this.props.registerRequest(username,password).then(
       ()=>{
-        //console.log('con',this.props.token);
-
         if(this.props.status === 'SUCCESS'){
           Materialize.toast('Success! Please log in.', 2000);
-
-          /* to be implemet for jwy*/
-          /*
-            1. save jwt
-            2. auto login
-          */
           sessionStorage.setItem('jwtToken', this.props.token); //!!!!
-
           browserHistory.push('/');
           return true;
 
         }else{
-          /*
-               ERROR CODES:
-                   1: BAD USERNAME
-                   2: BAD PASSWORD
-                   3: USERNAME EXISTS
-           */
-           let errorMessage = [
-               'Invalid Username',
-               'Password is too short',
-               'Username already exists'
-           ];
-
-           //console.log(this.props.errorCode);
-
-           let $toastContent = $('<span style="color: #FFB4BA">' + errorMessage[this.props.errorCode - 1] + '</span>');
+           let $toastContent = $('<span style="color: #FFB4BA">' +this.props.errorCode.MESSAGE + '</span>');
            Materialize.toast($toastContent, 2000);
            return false;
         }

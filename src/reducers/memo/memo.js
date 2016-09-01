@@ -48,7 +48,7 @@ export default function memo(state,action){
         }
       });
     case types.MEMO_POST_FAILURE:
-      return upate(state,{
+      return update(state,{
         post: {
           status: { $set: 'FAILURE'},
           error: { $set: action.error }
