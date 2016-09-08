@@ -2,7 +2,7 @@
     This project is inspired by (link:https://github.com/velopert/react-codelab-project)
 
 # You should
-    * see <https://github.com/velopert/react-codelab-project>
+    * [Absolute README link] (https://github.com/velopert/react-codelab-project)
 
 # I did
     * changed cookie to jwt
