@@ -118,7 +118,7 @@ export default function memo(state,action){
           status: { $set: 'FAILURE' },
           error: { $set: action.error }
         }
-      })
+      });
     case types.MEMO_REMOVE:
       return update(state, {
           remove: {

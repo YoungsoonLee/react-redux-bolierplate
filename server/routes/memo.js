@@ -31,6 +31,7 @@ router.post('/', (req,res)=>{
   if (!token) {
    return res.status(401).json( errorCode.EXPIRE_SESSION );
   }
+  
 
   // check login status
   // Check token that was passed by decoding token using secret
@@ -68,73 +69,75 @@ router.post('/', (req,res)=>{
 router.put('/:id',(req,res)=>{
   // check memo id validity
   if(!mongoose.Types.ObjectId.isValid(req.params.id)){
-    return res.status(400).json({
-      error: 'INVALID ID',
-      code: 1
-    });
+    return res.status(400).json(errorCode.INVALID_ID);
   }
 
   // check contents valid
   if(typeof req.body.contents !== 'string'){
-    return res.status(400).json({
-      error: 'EMPTY CONTENTS',
-      code: 2
-    });
+    return res.status(400).json(errorCode.EMPTY_CONTENTS);
   }
 
   if(req.body.contents === ''){
-    return res.status(400).json({
-      error: 'EMPTY CONTENTS',
-      code: 2
-    });
+    return res.status(400).json(errorCode.EMPTY_CONTENTS);
   }
 
   // check login status
+  /*
   if(typeof req.session.loginInfo === 'undefined'){
     return res.status(403).json({
       error: 'NOT LOGGED IN',
       code: 3
     });
   }
+  */
 
-  // find memo
-  Memo.findById(req.params.id, (err,memo)=>{
-    if(err) throw err;
+   //using jwt
+   let token = utils.getToken(req.headers.authorization);
+   if (!token) {
+    return res.status(401).json( errorCode.EXPIRE_SESSION );
+   }
 
-    // if memo does not exist
-    if(!memo){
-      return res.status(404).json({
-        error: 'NO RESOURCE',
-        code: 4
-      });
-    }
+   // check login status
+   // Check token that was passed by decoding token using secret
+   jwt.verify(token, process.env.JWT_SECRET, function(err, user) {
+     if (err) {
+       res.status(401).json( errorCode.EXPIRE_SESSION );
+     }else{
+       // find memo
+       Memo.findById(req.params.id, (err,memo)=>{
+         if(err) throw err;
 
-    // if exists, check writer
-    if(memo.writer != req.session.loginInfo.username){
-      return res.status(403).json({
-        error: 'PERMISSION FAILURE',
-        code: 5
-      });
-    }
+         // if memo does not exist
+         if(!memo){
+           return res.status(404).json(errorCode.NO_RESOURCE);
+         }
 
-    // modify and seve into db
-    memo.contents = req.body.contents;
-    memo.date.edited = new Date();
-    memo.is_edited = true;
+         // if exists, check writer
+         if(memo.writer != user.username){
+           return res.status(403).json(errorCode.PERMISSION_FAILURE);
+         }
 
-    //console.log(memo.contents);
+         // modify and seve into db
+         memo.contents = req.body.contents;
+         memo.date.edited = new Date();
+         memo.is_edited = true;
 
-    memo.save((err,memo)=>{
-      if(err) throw err;
-      return res.json({
-        success: true ,
-        memo
-      });
-    });
-  });
+         //console.log(memo.contents);
+
+         memo.save((err,memo)=>{
+           if(err) throw err;
+           return res.json({
+             success: true ,
+             memo
+           });
+         });
+
+       });
+     }
+   });
 });
 
-// delete memo
+
 /*
     DELETE MEMO: DELETE /api/memo/:id
     ERROR CODES
@@ -270,55 +273,67 @@ router.get('/:listType/:id', (req,res) => {
 router.post('/star/:id',(req,res)=>{
   // check memo id validity
   if(!mongoose.Types.ObjectId.isValid(req.params.id)){
-    return res.status(400).json({
-      error: 'INVALID ID',
-      code: 1
-    });
+    return res.status(400).json(errorCode.INVALID_ID);
   }
 
   //check login status
+  /*
   if(typeof req.session.loginInfo === 'undefined'){
     return res.status(403).json({
       error: 'NOT LOGGED IN',
       code: 2
     });
   }
+  */
 
-  // find memo
-  Memo.findById(req.params.id,(err,memo)=>{
-    if(err) throw err;
+  //using jwt
+  let token = utils.getToken(req.headers.authorization);
+  if (!token) {
+   return res.status(401).json( errorCode.EXPIRE_SESSION );
+  }
 
-    //memo does not exist
-    if(!memo){
-      return res.status(404).json({
-        error: 'NO RESOURCE',
-        code: 3
-      });
-    }
-
-    // get index of usrename in the array
-    let index = memo.starred.indexOf(req.session.loginInfo.username);
-    // check wether the user already has given a star
-    let hasStarred = (index === -1) ? false : true;
-
-    if(!hasStarred){
-      // if it does not exist
-      memo.starred.push(req.session.loginInfo.username);
+  // check login status
+  // Check token that was passed by decoding token using secret
+  jwt.verify(token, process.env.JWT_SECRET, function(err, user) {
+    if (err) {
+      res.status(401).json( errorCode.EXPIRE_SESSION );
     }else{
-      // already starred
-      memo.starred.splice(index,1);
-    }
+      // find memo
+      Memo.findById(req.params.id,(err,memo)=>{
+        if(err) throw err;
 
-    // save the memo
-    memo.save((err,memo)=>{
-      if(err) throw err;
-      return res.json({
-        success: true,
-        'has_starred': !hasStarred,
-        memo  //new memo object
+        //memo does not exist
+        if(!memo){
+          return res.status(404).json(errorCode.NO_RESOURCE);
+        }
+
+        // get index of usrename in the array
+        let index = memo.starred.indexOf(user.username);
+        // check wether the user already has given a star
+        let hasStarred = (index === -1) ? false : true;
+
+        if(!hasStarred){
+          // if it does not exist
+          memo.starred.push(user.username);
+        }else{
+          // already starred
+          memo.starred.splice(index,1);
+        }
+
+        // save the memo
+        memo.save((err,memo)=>{
+          if(err) throw err;
+          return res.json({
+            success: true,
+            'has_starred': !hasStarred,
+            memo  //new memo object
+          });
+        });
       });
-    });
+    }
   });
+
+
 })
 
 /*

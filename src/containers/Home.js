@@ -31,13 +31,11 @@ class Home extends React.Component {
       // DO THE INITIAL LOADING
       this.props.memoListRequest(true, undefined, undefined, this.props.username).then(
         () => {
-          /* CODES */
           this.setState({
             initiallyLoaded: true
           });
         }
       );
-
     };
 
     const loadUntilScrollable = () => {
@@ -191,7 +189,8 @@ class Home extends React.Component {
   }
 
   handleStar(id, index) {
-    return this.props.memoStarRequest(id, index).then(
+    let token = sessionStorage.getItem('jwtToken');
+    return this.props.memoStarRequest(id, index,token).then(
       () => {
         if (this.props.starStatus.status !== 'SUCCESS') {
           /*
@@ -223,7 +222,8 @@ class Home extends React.Component {
   }
 
   handleEdit(id, index, contents) {
-    return this.props.memoEditRequest(id, index, contents).then(
+    let token = sessionStorage.getItem('jwtToken');
+    return this.props.memoEditRequest(id, index, contents,token).then(
       () => {
         if (this.props.editStatus.status === "SUCCESS") {
           Materialize.toast('Success!', 2000);
@@ -236,6 +236,7 @@ class Home extends React.Component {
                   4: NO RESOURCE
                   5: PERMISSION FAILURE
           */
+         /*
           let errorMessage = [
             'Something broke',
             'Please write soemthing',
@@ -243,11 +244,12 @@ class Home extends React.Component {
             'That memo does not exist anymore',
             'You do not have permission'
           ];
-
-          let error = this.props.editStatus.error;
+          */
+         
+          //let error = this.props.editStatus.error;
 
           // NOTIFY ERROR
-          let $toastContent = $('<span style="color: #FFB4BA">' + errorMessage[error - 1] + '</span>');
+          let $toastContent = $('<span style="color: #FFB4BA">' + this.props.editStatus.error.MESSAGE + '</span>');
           Materialize.toast($toastContent, 2000);
 
           // IF NOT LOGGED IN, REFRESH THE PAGE AFTER 2 SECONDS
@@ -283,15 +285,17 @@ class Home extends React.Component {
                 3: NO RESOURCE
                 4: PERMISSION FAILURE
         */
+       /*
         let errorMessage = [
           'Something broke',
           'You are not logged in',
           'That memo does not exist',
           'You do not have permission'
         ];
+        */
 
         // NOTIFY ERROR
-        let $toastContent = $('<span style="color: #FFB4BA">' + errorMessage[this.props.removeStatus.error - 1] + '</span>');
+        let $toastContent = $('<span style="color: #FFB4BA">' + this.props.removeStatus.error.MESSAGE + '</span>');
         Materialize.toast($toastContent, 2000);
 
 
@@ -367,14 +371,14 @@ const mapDispatchToProps = (dispatch) => {
     memoListRequest: (isInitial, listType, id, username) => {
       return dispatch(memoListRequest(isInitial, listType, id, username));
     },
-    memoEditRequest: (id, index, contents) => {
-      return dispatch(memoEditRequest(id, index, contents));
+    memoEditRequest: (id, index, contents,token) => {
+      return dispatch(memoEditRequest(id, index, contents,token));
     },
     memoRemoveRequest: (id, index,token) => {
       return dispatch(memoRemoveRequest(id, index,token));
     },
-    memoStarRequest: (id, index) => {
-      return dispatch(memoStarRequest(id, index));
+    memoStarRequest: (id, index ,token) => {
+      return dispatch(memoStarRequest(id, index,token));
     }
   }
 }

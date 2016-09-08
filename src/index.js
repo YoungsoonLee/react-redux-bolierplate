@@ -13,25 +13,22 @@ import createLogger from 'redux-logger';
 
 // Container Components
 import { App , Home , Login , Register , Wall } from 'containers';
-//import ClientRoutes from './clientRoutes.js';
 
-/*
-const freducers = {
-  // ... your other reducers here ...
-  reducers,
-  form: formReducer     // <---- Mounted at 'form'. See note below.
+// DO NOT USE REDUX-LOGGER IN PRODUCTION ENV
+let middleware = [thunk];
+
+// DO NOT USE REDUX-LOGGER IN PRODUCTION ENV
+if (process.env.NODE_ENV !== 'production') {
+    const createLogger = require('redux-logger');
+    const logger = createLogger();
+    middleware = [...middleware, logger];
 }
-const reducer = combineReducers(freducers);
-*/
 
-/* todo : only logging in development */
-const logger = createLogger();
 const store = createStore(
-  //reducer,
-  reducers,
-  //applyMiddleware(thunk, promise,logger)
-  applyMiddleware(thunk, promise)
+    reducers,
+    applyMiddleware(...middleware)
 );
+
 
 const rootElement = document.getElementById('root');
 ReactDOM.render(

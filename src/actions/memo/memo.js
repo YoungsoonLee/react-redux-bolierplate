@@ -126,16 +126,26 @@ export function memoListFailure(){
 }
 
 /* edit memo*/
-export function memoEditRequest(id, index, contents){
+export function memoEditRequest(id, index, contents,token){
   return (dispatch) => {
     /* to be implement */
     dispatch(memoEdit())
 
-    return axios.put('/api/memo/' + id, { contents })
+    //return axios.put('/api/memo/' + id, { contents })
+    return axios({
+      method: 'put',
+      data: {
+        contents: contents,
+      },
+      url: '/api/memo/'+ id,
+      headers: {'Authorization': `Bearer ${token}`}
+    })
     .then((response) => {
+        //console.log('action response:',response);
         dispatch(memoEditSuccess(index, response.data.memo));
     }).catch((error) => {
-        dispatch(memoEditFailure(error.response.data.code));
+        //console.log('action error:',error.response.data);
+        dispatch(memoEditFailure(error.response.data));
     });
   }
 }
@@ -154,9 +164,11 @@ export function memoEditSuccess(index, memo){
   }
 }
 
-export function memoEditFailure(){
+export function memoEditFailure(error){
+  console.log('memoEditFailure:',error);
   return {
-    type: MEMO_EDIT_FAILURE
+    type: MEMO_EDIT_FAILURE,
+    error
   }
 }
 
@@ -205,15 +217,20 @@ export function memoRemoveFailure(error) {
 }
 
 /* MEMO TOGGLE STAR */
-export function memoStarRequest(id, index) {
+export function memoStarRequest(id, index,token) {
   return (dispatch) => {
     // to be implemented
-    return axios.post('/api/memo/star/'+id)
+    //return axios.post('/api/memo/star/'+id)
+    return  axios({
+       method: 'post',
+       url: '/api/memo/star/'+id,
+       headers: {'Authorization': `Bearer ${token}`}
+     })
     .then((response) => {
       dispatch(memoStarSuccess(index,response.data.memo));
     })
     .catch((error) => {
-      dispatch(memoStarFailure(error,response.data.code));
+      dispatch(memoStarFailure(error,response.data));
     });
   }
 }

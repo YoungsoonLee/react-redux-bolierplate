@@ -109,7 +109,7 @@ class Memo extends React.Component {
     const memoView = (
       <div className="card">
         <div className="info">
-             <Link to={`/wall/${this.props.data.writer}`} className="username">{this.props.data.writer}</Link> wrote a log · <TimeAgo date={this.props.data.date.created}/> 
+             <Link to={`/wall/${this.props.data.writer}`} className="username">{this.props.data.writer}</Link> wrote a log · <TimeAgo date={this.props.data.date.created}/>
              { this.props.data.is_edited ? editedInfo : undefined }
              { ownership ? dropDownMenu : undefined }
          </div>
