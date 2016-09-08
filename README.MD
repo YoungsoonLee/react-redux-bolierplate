@@ -1,8 +1,8 @@
 # This project
-    This project is inspired by <https://github.com/velopert/react-codelab-project>
+    This project is inspired by (link:https://github.com/velopert/react-codelab-project)
 
 # You should
-    * see [https://github.com/velopert/react-codelab-project]
+    * see <https://github.com/velopert/react-codelab-project>
 
 # I did
     * changed cookie to jwt
